@@ -15,7 +15,10 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.relentless.app"
+      "bundleIdentifier": "com.relentless.app",
+      "infoPlist": {
+        "UIBackgroundModes": ["fetch", "remote-notification"]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -35,6 +38,14 @@
         "expo-font",
         {
           "fonts": []
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#ff3b30",
+          "defaultChannel": "default"
         }
       ]
     ],

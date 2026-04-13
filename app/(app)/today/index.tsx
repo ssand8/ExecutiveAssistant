@@ -1,14 +1,37 @@
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/common/Screen';
 import { TaskCard } from '@/components/tasks/TaskCard';
 import { Colors } from '@/constants/colors';
 import { useTodayTasks } from '@/hooks/useTodayTasks';
+import { useAuthStore } from '@/stores/authStore';
+import { supabase } from '@/lib/supabase';
 import type { TaskWithGoal } from '@/hooks/useTodayTasks';
 
 export default function TodayScreen() {
   const { data: tasks, isLoading, error, refetch, isRefetching } = useTodayTasks();
+  const userId = useAuthStore((s) => s.user?.id);
+
+  async function sendTestNotification() {
+    if (!userId) return;
+    const firstTask = tasks?.[0];
+    const { error } = await supabase.functions.invoke('send-notification', {
+      body: {
+        userId,
+        title: 'RELENTLESS',
+        body: firstTask
+          ? `You have a task due: ${firstTask.title}`
+          : 'Push notifications are working.',
+        data: firstTask ? { taskId: firstTask.id, type: 'test' } : { type: 'test' },
+      },
+    });
+    if (error) {
+      Alert.alert('Error', 'Failed to send test notification. Check that your push token is saved and the Edge Function is deployed.');
+    } else {
+      Alert.alert('Sent', 'Check your notification tray. Tap it to test deep linking.');
+    }
+  }
 
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
@@ -39,12 +62,20 @@ export default function TodayScreen() {
                 </Text>
               )}
             </View>
-            <TouchableOpacity
-              style={styles.addButton}
-              onPress={() => router.push('/(app)/tasks/new')}
-            >
-              <Ionicons name="add" size={24} color={Colors.textPrimary} />
-            </TouchableOpacity>
+            <View style={styles.headerButtons}>
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={sendTestNotification}
+              >
+                <Ionicons name="notifications-outline" size={20} color={Colors.textSecondary} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={() => router.push('/(app)/tasks/new')}
+              >
+                <Ionicons name="add" size={24} color={Colors.textPrimary} />
+              </TouchableOpacity>
+            </View>
           </View>
         }
         ListEmptyComponent={
@@ -110,14 +141,19 @@ const styles = StyleSheet.create({
     color: Colors.textTertiary,
     marginTop: 2,
   },
-  addButton: {
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 8,
+  },
+  iconButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
     backgroundColor: Colors.surfaceElevated,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 8,
   },
   centered: {
     flex: 1,
