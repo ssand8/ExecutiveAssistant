@@ -1,11 +1,13 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, FlatList } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/common/Screen';
+import { Button } from '@/components/common/Button';
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
 import { supabase } from '@/lib/supabase';
+import { useDecomposeGoal } from '@/hooks/useDecomposition';
 import type { Goal } from '@/hooks/useGoals';
 import type { Task } from '@/hooks/useTodayTasks';
 
@@ -51,6 +53,36 @@ export default function GoalDetailScreen() {
   const { goalId } = useLocalSearchParams<{ goalId: string }>();
   const { data: goal, isLoading } = useGoalDetail(goalId);
   const { data: tasks } = useGoalTasks(goalId);
+  const decompose = useDecomposeGoal();
+
+  const hasExistingPlan = goal?.ai_breakdown_metadata != null;
+  const hasTasks = tasks && tasks.length > 0;
+
+  async function handleGeneratePlan() {
+    if (hasExistingPlan || hasTasks) {
+      Alert.alert(
+        'Regenerate Plan?',
+        'This will replace the existing AI plan. Tasks you already created will remain.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Regenerate', style: 'destructive', onPress: runDecompose },
+        ]
+      );
+    } else {
+      runDecompose();
+    }
+  }
+
+  function runDecompose() {
+    decompose.mutate(goalId, {
+      onSuccess: () => {
+        router.push(`/(app)/goals/${goalId}/review`);
+      },
+      onError: (err) => {
+        Alert.alert('Error', err.message ?? 'Failed to generate plan. Check your connection and try again.');
+      },
+    });
+  }
 
   if (isLoading) {
     return (
@@ -100,6 +132,37 @@ export default function GoalDetailScreen() {
           <Text style={styles.description}>{goal.description}</Text>
         )}
 
+        {/* AI Plan Section */}
+        <View style={styles.planSection}>
+          {decompose.isPending ? (
+            <View style={styles.generatingState}>
+              <ActivityIndicator color={Colors.accent} size="small" />
+              <Text style={styles.generatingText}>
+                Claude is breaking down your goal…
+              </Text>
+            </View>
+          ) : (
+            <>
+              <Button
+                label={hasExistingPlan ? '✦ View / Regenerate Plan' : '✦ Generate Plan with AI'}
+                onPress={hasExistingPlan ? () => router.push(`/(app)/goals/${goalId}/review`) : handleGeneratePlan}
+                variant={hasExistingPlan ? 'secondary' : 'primary'}
+                style={styles.planButton}
+              />
+              {!hasExistingPlan && !hasTasks && (
+                <Text style={styles.planHint}>
+                  Claude will break this goal into projects, tasks, and realistic due dates.
+                </Text>
+              )}
+              {!hasExistingPlan && (
+                <TouchableOpacity onPress={handleGeneratePlan} style={styles.regenerateLink}>
+                  {hasExistingPlan && <Text style={styles.regenerateLinkText}>Regenerate plan</Text>}
+                </TouchableOpacity>
+              )}
+            </>
+          )}
+        </View>
+
         {/* Tasks section */}
         <View style={styles.tasksHeader}>
           <Text style={styles.sectionTitle}>
@@ -118,7 +181,7 @@ export default function GoalDetailScreen() {
           <View style={styles.emptyTasks}>
             <Text style={styles.emptyTasksText}>No tasks yet.</Text>
             <Text style={styles.emptyTasksSubtext}>
-              Add tasks manually or wait for AI decomposition (coming in M1.3).
+              Generate an AI plan above or add tasks manually.
             </Text>
           </View>
         )}
@@ -133,7 +196,7 @@ export default function GoalDetailScreen() {
               <View style={[styles.priorityDot, {
                 backgroundColor: task.priority === 1 ? Colors.danger
                   : task.priority === 2 ? Colors.warning
-                  : Colors.textTertiary
+                  : Colors.textTertiary,
               }]} />
               <Text style={styles.taskTitle} numberOfLines={1}>{task.title}</Text>
             </View>
@@ -144,6 +207,8 @@ export default function GoalDetailScreen() {
             )}
           </TouchableOpacity>
         ))}
+
+        <View style={{ height: 40 }} />
       </ScrollView>
     </Screen>
   );
@@ -176,7 +241,42 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: Colors.textSecondary,
     lineHeight: 22,
+    marginBottom: 24,
+  },
+  planSection: {
     marginBottom: 32,
+  },
+  planButton: {
+    width: '100%',
+  },
+  planHint: {
+    fontSize: 12,
+    color: Colors.textTertiary,
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  regenerateLink: {
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  regenerateLinkText: {
+    fontSize: 13,
+    color: Colors.textTertiary,
+  },
+  generatingState: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    backgroundColor: Colors.surface,
+    borderRadius: Layout.cardRadius,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: 20,
+  },
+  generatingText: {
+    fontSize: 14,
+    color: Colors.textSecondary,
   },
   tasksHeader: {
     flexDirection: 'row',
