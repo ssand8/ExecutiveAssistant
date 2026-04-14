@@ -24,6 +24,38 @@ export function useGoals() {
   });
 }
 
+export interface GoalProgress {
+  goalId: string;
+  total: number;
+  completed: number;
+  pct: number;
+}
+
+export function useGoalProgress(goalId: string | undefined) {
+  return useQuery({
+    queryKey: ['goal-progress', goalId],
+    enabled: !!goalId,
+    queryFn: async (): Promise<GoalProgress> => {
+      if (!goalId) return { goalId: '', total: 0, completed: 0, pct: 0 };
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('id, status')
+        .eq('goal_id', goalId);
+      if (error) throw error;
+      const tasks = data ?? [];
+      const total = tasks.length;
+      const completed = tasks.filter((t) => t.status === 'complete').length;
+      return {
+        goalId,
+        total,
+        completed,
+        pct: total === 0 ? 0 : Math.round((completed / total) * 100),
+      };
+    },
+    staleTime: 60_000,
+  });
+}
+
 export function useCreateGoal() {
   const queryClient = useQueryClient();
   const userId = useAuthStore((s) => s.user?.id);

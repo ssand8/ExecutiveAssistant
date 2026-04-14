@@ -14,6 +14,128 @@ export type Database = {
   }
   public: {
     Tables: {
+      escalation_state: {
+        Row: {
+          created_at: string
+          id: string
+          last_nudge_at: string | null
+          level: Database["public"]["Enums"]["escalation_level"]
+          level_1_at: string | null
+          level_2_at: string | null
+          level_3_at: string | null
+          level_4_at: string | null
+          nudge_count: number
+          resolved_at: string | null
+          task_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_nudge_at?: string | null
+          level?: Database["public"]["Enums"]["escalation_level"]
+          level_1_at?: string | null
+          level_2_at?: string | null
+          level_3_at?: string | null
+          level_4_at?: string | null
+          nudge_count?: number
+          resolved_at?: string | null
+          task_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_nudge_at?: string | null
+          level?: Database["public"]["Enums"]["escalation_level"]
+          level_1_at?: string | null
+          level_2_at?: string | null
+          level_3_at?: string | null
+          level_4_at?: string | null
+          nudge_count?: number
+          resolved_at?: string | null
+          task_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escalation_state_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: true
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "escalation_state_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_patterns"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "escalation_state_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      goal_embeddings: {
+        Row: {
+          content: string
+          created_at: string
+          embedding: string
+          goal_id: string
+          id: string
+          model: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          embedding: string
+          goal_id: string
+          id?: string
+          model?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          embedding?: string
+          goal_id?: string
+          id?: string
+          model?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goal_embeddings_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: true
+            referencedRelation: "goals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "goal_embeddings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_patterns"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "goal_embeddings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       goals: {
         Row: {
           ai_breakdown_metadata: Json | null
@@ -54,6 +176,68 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "goals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_patterns"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "goals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nudge_history: {
+        Row: {
+          channel: Database["public"]["Enums"]["nudge_channel"]
+          external_id: string | null
+          id: string
+          level: Database["public"]["Enums"]["escalation_level"]
+          message: string
+          sent_at: string
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          channel: Database["public"]["Enums"]["nudge_channel"]
+          external_id?: string | null
+          id?: string
+          level: Database["public"]["Enums"]["escalation_level"]
+          message: string
+          sent_at?: string
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          channel?: Database["public"]["Enums"]["nudge_channel"]
+          external_id?: string | null
+          id?: string
+          level?: Database["public"]["Enums"]["escalation_level"]
+          message?: string
+          sent_at?: string
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nudge_history_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nudge_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_patterns"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "nudge_history_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
@@ -102,6 +286,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "goals"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_patterns"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "projects_user_id_fkey"
@@ -164,6 +355,65 @@ export type Database = {
             foreignKeyName: "task_check_ins_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "user_patterns"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "task_check_ins_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_embeddings: {
+        Row: {
+          content: string
+          created_at: string
+          embedding: string
+          id: string
+          model: string
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          embedding: string
+          id?: string
+          model?: string
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          embedding?: string
+          id?: string
+          model?: string
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_embeddings_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: true
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_embeddings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_patterns"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "task_embeddings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -178,6 +428,7 @@ export type Database = {
           estimated_minutes: number | null
           goal_id: string | null
           id: string
+          pre_deadline_warned_at: string | null
           priority: number
           project_id: string | null
           start_date: string | null
@@ -194,6 +445,7 @@ export type Database = {
           estimated_minutes?: number | null
           goal_id?: string | null
           id?: string
+          pre_deadline_warned_at?: string | null
           priority?: number
           project_id?: string | null
           start_date?: string | null
@@ -210,6 +462,7 @@ export type Database = {
           estimated_minutes?: number | null
           goal_id?: string | null
           id?: string
+          pre_deadline_warned_at?: string | null
           priority?: number
           project_id?: string | null
           start_date?: string | null
@@ -237,6 +490,13 @@ export type Database = {
             foreignKeyName: "tasks_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "user_patterns"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "tasks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -251,6 +511,7 @@ export type Database = {
           notification_intensity: string
           onboarding_complete: boolean
           phone: string | null
+          phone_number: string | null
           push_token: string | null
           quiet_hours_end: string | null
           quiet_hours_start: string | null
@@ -266,6 +527,7 @@ export type Database = {
           notification_intensity?: string
           onboarding_complete?: boolean
           phone?: string | null
+          phone_number?: string | null
           push_token?: string | null
           quiet_hours_end?: string | null
           quiet_hours_start?: string | null
@@ -281,6 +543,7 @@ export type Database = {
           notification_intensity?: string
           onboarding_complete?: boolean
           phone?: string | null
+          phone_number?: string | null
           push_token?: string | null
           quiet_hours_end?: string | null
           quiet_hours_start?: string | null
@@ -292,13 +555,37 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_patterns: {
+        Row: {
+          active_goal_count: number | null
+          active_task_count: number | null
+          avg_reschedules_per_task: number | null
+          overdue_rate_pct: number | null
+          tasks_completed_last_30d: number | null
+          tasks_completed_last_7d: number | null
+          top_reschedule_reason: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      [_ in never]: never
+      match_task_embeddings: {
+        Args: {
+          match_count?: number
+          match_user_id: string
+          query_embedding: string
+        }
+        Returns: {
+          content: string
+          similarity: number
+          task_id: string
+        }[]
+      }
     }
     Enums: {
-      [_ in never]: never
+      escalation_level: "0" | "1" | "2" | "3" | "4"
+      nudge_channel: "push" | "sms" | "in_app"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -307,6 +594,7 @@ export type Database = {
 }
 
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
 type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
@@ -405,8 +693,28 @@ export type Enums<
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
 
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      escalation_level: ["0", "1", "2", "3", "4"],
+      nudge_channel: ["push", "sms", "in_app"],
+    },
   },
 } as const

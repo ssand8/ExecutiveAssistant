@@ -1,11 +1,14 @@
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
 import { GoalBadge } from '@/components/goals/GoalBadge';
 import { RescheduleModal } from '@/components/tasks/RescheduleModal';
+import { MissedDeadlineModal } from '@/components/tasks/MissedDeadlineModal';
+import { HelpModal } from '@/components/tasks/HelpModal';
 import { useCompleteTask, useSnoozeTask, useRescheduleTask } from '@/hooks/useTaskMutations';
+import { useTaskEscalationState } from '@/hooks/useEscalationState';
 import type { TaskWithGoal } from '@/hooks/useTodayTasks';
 
 interface TaskCardProps {
@@ -45,9 +48,23 @@ function priorityColor(priority: number): string {
   return Colors.textTertiary;
 }
 
+function escalationColor(level: number): string | undefined {
+  if (level === 1) return Colors.level1;
+  if (level === 2) return Colors.level2;
+  if (level === 3) return Colors.level3;
+  if (level === 4) return Colors.level4;
+  return undefined;
+}
+
 export function TaskCard({ task, onPress }: TaskCardProps) {
   const [showReschedule, setShowReschedule] = useState(false);
+  const [showMissedDeadline, setShowMissedDeadline] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const { label: dueLabel, isOverdue } = formatDueTime(task.due_date);
+
+  const { data: escalation } = useTaskEscalationState(task.id);
+  const escalationLevel = escalation?.level ?? 0;
+  const escalColor = escalationColor(escalationLevel);
 
   const complete = useCompleteTask();
   const snooze = useSnoozeTask();
@@ -73,12 +90,21 @@ export function TaskCard({ task, onPress }: TaskCardProps) {
   return (
     <>
       <TouchableOpacity
-        style={[styles.card, isOverdue && styles.cardOverdue]}
+        style={[
+          styles.card,
+          isOverdue && styles.cardOverdue,
+          escalColor ? { borderColor: escalColor + '66' } : null,
+        ]}
         onPress={onPress}
         activeOpacity={0.85}
       >
-        {/* Priority bar */}
-        <View style={[styles.priorityBar, { backgroundColor: priorityColor(task.priority) }]} />
+        {/* Priority / escalation bar — escalation color takes over when active */}
+        <View
+          style={[
+            styles.priorityBar,
+            { backgroundColor: escalColor ?? priorityColor(task.priority) },
+          ]}
+        />
 
         <View style={styles.body}>
           {/* Goal badge */}
@@ -136,10 +162,22 @@ export function TaskCard({ task, onPress }: TaskCardProps) {
               <Text style={styles.actionBtnText}>Reschedule</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.actionBtn} onPress={onPress}>
+            <TouchableOpacity style={styles.actionBtn} onPress={() => setShowHelp(true)}>
               <Ionicons name="flash-outline" size={14} color={Colors.textSecondary} />
               <Text style={styles.actionBtnText}>Help</Text>
             </TouchableOpacity>
+
+            {/* Respond button appears when escalation level ≥ 2 */}
+            {escalationLevel >= 2 && escalation && (
+              <TouchableOpacity
+                style={[styles.actionBtn, styles.respondBtn]}
+                onPress={() => setShowMissedDeadline(true)}
+                disabled={isMutating}
+              >
+                <Ionicons name="warning-outline" size={14} color={Colors.level4} />
+                <Text style={styles.respondBtnText}>Respond</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </TouchableOpacity>
@@ -150,6 +188,24 @@ export function TaskCard({ task, onPress }: TaskCardProps) {
         onClose={() => setShowReschedule(false)}
         onConfirm={handleRescheduleConfirm}
         loading={reschedule.isPending}
+      />
+
+      {escalation && (
+        <MissedDeadlineModal
+          visible={showMissedDeadline}
+          taskId={task.id}
+          taskTitle={task.title}
+          currentDueDate={task.due_date}
+          escalationStateId={escalation.id}
+          onClose={() => setShowMissedDeadline(false)}
+        />
+      )}
+
+      <HelpModal
+        visible={showHelp}
+        taskId={task.id}
+        taskTitle={task.title}
+        onClose={() => setShowHelp(false)}
       />
     </>
   );
@@ -234,5 +290,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.success,
     fontWeight: '600',
+  },
+  respondBtn: {
+    backgroundColor: Colors.level4 + '22',
+    borderColor: Colors.level4 + '55',
+  },
+  respondBtnText: {
+    fontSize: 12,
+    color: Colors.level4,
+    fontWeight: '700',
   },
 });

@@ -37,7 +37,7 @@ export default function SignUpScreen() {
     if (error) {
       setError(error.message);
     } else {
-      router.replace('/(app)/today');
+      router.replace('/(onboarding)/welcome');
     }
     setLoading(false);
   }

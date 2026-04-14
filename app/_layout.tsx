@@ -12,6 +12,7 @@ import {
   parseNotificationData,
 } from '@/lib/notifications';
 import { useAuthStore } from '@/stores/authStore';
+import { BlockedScreen } from '@/components/common/BlockedScreen';
 
 export default function RootLayout() {
   const { setSession, setLoading, user } = useAuthStore();
@@ -76,8 +77,11 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(auth)" />
+          <Stack.Screen name="(onboarding)" />
           <Stack.Screen name="(app)" />
         </Stack>
+        {/* Level 4 escalation overlay — renders above everything when active */}
+        {user && <BlockedScreen />}
       </QueryClientProvider>
     </GestureHandlerRootView>
   );

@@ -17,7 +17,11 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.relentless.app",
       "infoPlist": {
-        "UIBackgroundModes": ["fetch", "remote-notification"]
+        "UIBackgroundModes": [
+          "fetch",
+          "remote-notification"
+        ],
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -51,6 +55,18 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "5c77fcc9-dd15-4bdb-bfe6-7215cef3a71d"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/5c77fcc9-dd15-4bdb-bfe6-7215cef3a71d"
     }
   }
 }

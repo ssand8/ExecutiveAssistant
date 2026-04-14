@@ -61,9 +61,16 @@ export function useCompleteTask() {
         new_status: 'complete',
       };
       await supabase.from('task_check_ins').insert(checkIn);
+
+      // Fire-and-forget: embed the completed task for RAG history
+      // Don't await — embedding is async and non-blocking
+      supabase.functions.invoke('embed-task', { body: { taskId } }).catch((err) => {
+        console.warn('[useCompleteTask] embed-task failed silently:', err);
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['escalation'] });
     },
   });
 }

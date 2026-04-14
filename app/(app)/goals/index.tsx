@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/common/Screen';
 import { Colors } from '@/constants/colors';
 import { Layout } from '@/constants/layout';
-import { useGoals } from '@/hooks/useGoals';
+import { useGoals, useGoalProgress } from '@/hooks/useGoals';
 import type { Goal } from '@/hooks/useGoals';
 
 function daysRemaining(targetDate: string): number {
@@ -16,6 +16,16 @@ function GoalCard({ goal }: { goal: Goal }) {
   const days = daysRemaining(goal.target_date);
   const isAtRisk = days < 14 && days > 0;
   const isPast = days <= 0;
+  const { data: progress } = useGoalProgress(goal.id);
+
+  const pct = progress?.pct ?? 0;
+  const progressColor = pct === 100
+    ? Colors.success
+    : isPast || (isAtRisk && pct < 50)
+      ? Colors.danger
+      : isAtRisk
+        ? Colors.warning
+        : Colors.accent;
 
   return (
     <TouchableOpacity
@@ -45,6 +55,19 @@ function GoalCard({ goal }: { goal: Goal }) {
       {goal.description && (
         <Text style={styles.goalDesc} numberOfLines={1}>{goal.description}</Text>
       )}
+
+      {/* Progress bar */}
+      {progress && progress.total > 0 && (
+        <View style={styles.progressRow}>
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressFill, { width: `${pct}%` as any, backgroundColor: progressColor }]} />
+          </View>
+          <Text style={[styles.progressLabel, { color: progressColor }]}>
+            {progress.completed}/{progress.total}
+          </Text>
+        </View>
+      )}
+
       <Text style={styles.goalDate}>
         Target: {new Date(goal.target_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
       </Text>
@@ -137,6 +160,29 @@ const styles = StyleSheet.create({
   goalTitle: { fontSize: 17, fontWeight: '700', color: Colors.textPrimary, lineHeight: 24 },
   goalDesc: { fontSize: 13, color: Colors.textSecondary },
   goalDate: { fontSize: 12, color: Colors.textTertiary },
+  progressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 2,
+  },
+  progressTrack: {
+    flex: 1,
+    height: 4,
+    backgroundColor: Colors.border,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  progressLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    minWidth: 32,
+    textAlign: 'right',
+  },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 80, gap: 12 },
   emptyText: { fontSize: 18, fontWeight: '600', color: Colors.textSecondary },
   createPrompt: {

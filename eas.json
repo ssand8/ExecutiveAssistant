@@ -1,0 +1,47 @@
+{
+  "cli": {
+    "version": ">= 12.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "simulator": true
+      },
+      "env": {
+        "APP_ENV": "development"
+      }
+    },
+    "staging": {
+      "distribution": "internal",
+      "channel": "staging",
+      "ios": {
+        "buildConfiguration": "Release"
+      },
+      "env": {
+        "APP_ENV": "staging"
+      }
+    },
+    "production": {
+      "distribution": "store",
+      "channel": "production",
+      "ios": {
+        "buildConfiguration": "Release"
+      },
+      "env": {
+        "APP_ENV": "production"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "sandbergscottr@gmail.com",
+        "ascAppId": "com.relentless.app",
+        "appleTeamId": "7P2RF7S9WG"
+      }
+    }
+  }
+}
